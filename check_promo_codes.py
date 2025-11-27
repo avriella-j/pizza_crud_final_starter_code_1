@@ -42,7 +42,7 @@ else:
         print(f"   Start Date: {start if start else 'No restriction'}")
         print(f"   End Date: {end if end else 'No restriction'}")
         
-        if limit == -1:
+        if limit is None or limit == -1:
             print(f"   Usage Limit: Unlimited")
             print(f"   Times Used: {used}")
         else:
