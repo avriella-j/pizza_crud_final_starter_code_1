@@ -130,9 +130,10 @@ def validate_promo_code(code):
         if not promo:
             return None
         
-        # Check if usage limit is reached (-1 means unlimited)
-        if promo['usage_limit'] != -1 and promo['times_used'] >= promo['usage_limit']:
-            return None
+        # Check if usage limit is reached (NULL or -1 means unlimited)
+        if promo['usage_limit'] is not None and promo['usage_limit'] != -1:
+            if promo['times_used'] >= promo['usage_limit']:
+                return None
         
         # Check date validity (if dates are set)
         current_date = datetime.now()
@@ -269,4 +270,5 @@ def confirmation():
     return render_template('confirmation.html', 
                          order=order_data, 
                          display_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                       
 
