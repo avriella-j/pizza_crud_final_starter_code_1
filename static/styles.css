@@ -161,4 +161,18 @@ button:hover {
   color: #1b5e20;
 }
 
+/* Promo code discount styling */
+.discount-applied {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.final-total {
+  font-size: 1.3rem;
+  color: #8B2323;
+  border-top: 2px solid #8B2323;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 

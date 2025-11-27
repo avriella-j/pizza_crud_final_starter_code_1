@@ -34,13 +34,19 @@
             <td>{{ order.pizza_name }}</td>
             <td>{{ order.quantity }}</td>
             <td>${{ '%.2f' % order.price }}</td>
-            <td>${{ '%.2f' % (order.price * order.quantity) }}</td>
+            <td>${{ '%.2f' % order.subtotal }}</td>
           </tr>
         </tbody>
       </table>
 
       <div class="order-total">
-        <p><strong>Total:</strong> ${{ '%.2f' % order.total }}</p>
+        {% if order.promo_code %}
+          <p><strong>Subtotal:</strong> ${{ '%.2f' % order.subtotal }}</p>
+          <p class="discount-applied"><strong>Discount ({{ order.promo_code }} - {{ order.discount_percent }}%):</strong> -${{ '%.2f' % order.discount_amount }}</p>
+          <p class="final-total"><strong>Total:</strong> ${{ '%.2f' % order.final_total }}</p>
+        {% else %}
+          <p><strong>Total:</strong> ${{ '%.2f' % order.final_total }}</p>
+        {% endif %}
       </div>
     </div>
 
