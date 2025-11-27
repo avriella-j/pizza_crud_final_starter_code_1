@@ -215,12 +215,35 @@ def get_order_details(order_id):
     finally:
         conn.close()
 
+def get_pizza_image_filename(pizza_name):
+    """Map pizza names to their actual image filenames"""
+    # Mapping for pizzas with special filename cases
+    image_map = {
+        'Margherita': 'margharita.avif',  # Misspelled in filename
+        'BBQ Chicken': 'bbq_chicken.avif',  # Underscore instead of space
+        'Meat Lovers': 'meat lovers.avif',  # Space in filename
+        'Supreme': 'Supreme.jpg',  # Capital S and .jpg extension
+    }
+    
+    # Return mapped filename or generate default
+    if pizza_name in image_map:
+        return image_map[pizza_name]
+    else:
+        # Default: lowercase, no spaces, .avif extension
+        return pizza_name.lower().replace(' ', '') + '.avif'
+
 # Routes
 @app.route('/')
 def menu():
     """Show the pizza menu and order form"""
     pizzas = get_all_pizzas()
-    return render_template('menu.html', pizzas=pizzas)
+    # Add image filename to each pizza
+    pizzas_with_images = []
+    for pizza in pizzas:
+        pizza_dict = dict(pizza)
+        pizza_dict['image_filename'] = get_pizza_image_filename(pizza['name'])
+        pizzas_with_images.append(pizza_dict)
+    return render_template('menu.html', pizzas=pizzas_with_images)
 
 @app.route('/order', methods=['POST'])
 def create_order():
