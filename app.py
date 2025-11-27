@@ -54,10 +54,8 @@ def init_db():
                 pizza_id INTEGER,
                 quantity INTEGER NOT NULL,
                 customer_name TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 promo_code_id INTEGER,
-                discount_amount REAL DEFAULT 0,
-                final_total REAL NOT NULL,
-                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (pizza_id) REFERENCES Pizza (id),
                 FOREIGN KEY (promo_code_id) REFERENCES PromoCode (id)
             )
@@ -166,14 +164,6 @@ def save_order(pizza_id, quantity, customer_name, promo_code=None):
     try:
         cursor = conn.cursor()
         
-        # Get pizza price
-        cursor.execute('SELECT price FROM Pizza WHERE id = ?', (pizza_id,))
-        pizza = cursor.fetchone()
-        if not pizza:
-            return None
-        
-        subtotal = pizza['price'] * int(quantity)
-        discount_amount = 0
         promo_code_id = None
         
         # Validate and apply promo code if provided
@@ -181,16 +171,14 @@ def save_order(pizza_id, quantity, customer_name, promo_code=None):
             promo = validate_promo_code(promo_code)
             if promo:
                 promo_code_id = promo['id']
-                discount_amount = subtotal * (promo['discount_percent'] / 100)
                 increment_promo_usage(promo_code_id)
         
-        final_total = subtotal - discount_amount
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         cursor.execute('''
-            INSERT INTO "Order" (pizza_id, quantity, customer_name, promo_code_id, discount_amount, final_total, order_date) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (pizza_id, quantity, customer_name, promo_code_id, discount_amount, final_total, current_time))
+            INSERT INTO "Order" (pizza_id, quantity, customer_name, timestamp, promo_code_id) 
+            VALUES (?, ?, ?, ?, ?)
+        ''', (pizza_id, quantity, customer_name, current_time, promo_code_id))
         
         order_id = cursor.lastrowid
         conn.commit()
@@ -205,7 +193,7 @@ def get_order_details(order_id):
         cursor = conn.cursor()
         cursor.execute('''
             SELECT o.id, p.name, p.price, o.quantity, o.customer_name, 
-                   o.discount_amount, o.final_total, pc.code, pc.discount_percent
+                   o.timestamp, pc.code, pc.discount_percent
             FROM "Order" o
             JOIN Pizza p ON o.pizza_id = p.id
             LEFT JOIN PromoCode pc ON o.promo_code_id = pc.id
@@ -275,7 +263,14 @@ def confirmation():
     if not order:
         return redirect(url_for('menu'))
     
+    # Calculate totals
     subtotal = order[2] * order[3]
+    discount_amount = 0
+    
+    if order[6]:  # If promo code exists
+        discount_amount = subtotal * (order[7] / 100)
+    
+    final_total = subtotal - discount_amount
     
     order_data = {
         'order_id': order[0],
@@ -283,15 +278,20 @@ def confirmation():
         'price': order[2],
         'quantity': order[3],
         'customer_name': order[4],
-        'discount_amount': order[5],
-        'final_total': order[6],
-        'promo_code': order[7],
-        'discount_percent': order[8],
-        'subtotal': subtotal
+        'timestamp': order[5],
+        'promo_code': order[6],
+        'discount_percent': order[7],
+        'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'final_total': final_total
     }
     
     return render_template('confirmation.html', 
                          order=order_data, 
-                         display_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                         display_date=order[5])
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True, host='0.0.0.0', port=5000)
                        
 
