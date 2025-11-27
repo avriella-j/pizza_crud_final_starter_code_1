@@ -17,7 +17,9 @@ ENV/
 Thumbs.db
 
 # Databases & data artifacts
-data/*.db
+data/
+*.db
+*.sqlite
 *.sqlite3
 
 # Flask instance folder
